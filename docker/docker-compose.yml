@@ -2,8 +2,8 @@ version: '3'
 
 volumes:
   modmail-app:
-  modmail-postgres:
   modmail-redis:
+
 
 services:
   modmail-api:
@@ -47,8 +47,6 @@ services:
     depends_on:
       dispatch:
         condition: service_started
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -68,9 +66,9 @@ services:
       PREMIUM3_ROLE: 0
       PREMIUM5_ROLE: 0
       POSTGRES_DATABASE: modmail
-      POSTGRES_USERNAME: postgres
-      POSTGRES_PASSWORD: ''
-      POSTGRES_HOST: postgres
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -89,25 +87,25 @@ services:
       BOD_TOKEN: ''
       BFD_TOKEN: ''
 
-  modmail-web:
-    build:
-      context: ../
-      dockerfile: docker/web/Dockerfile
-    restart: unless-stopped
-    depends_on:
-      modmail-api:
-        condition: service_started
-    ports:
-      - '8000:6000'
-    environment:
-      ENVIRONMENT: production
-      BASE_URI: ${BASE_URI}
-      HTTP_HOST: 0.0.0.0
-      HTTP_PORT: 6000
-      API_HOST: modmail-api
-      API_PORT: 6001
-      GOOGLE_ANALYTICS: ''
-      SENTRY_DSN: ''
+  # modmail-web:
+  #   build:
+  #     context: ../
+  #     dockerfile: docker/web/Dockerfile
+  #   restart: unless-stopped
+  #   depends_on:
+  #     modmail-api:
+  #       condition: service_started
+  #   ports:
+  #     - '8000:6000'
+  #   environment:
+  #     ENVIRONMENT: production
+  #     BASE_URI: ${BASE_URI}
+  #     HTTP_HOST: 0.0.0.0
+  #     HTTP_PORT: 6000
+  #     API_HOST: modmail-api
+  #     API_PORT: 6001
+  #     GOOGLE_ANALYTICS: ''
+  #     SENTRY_DSN: ''
 
   dispatch:
     image: chamburr/twilight-dispatch:latest
@@ -142,6 +140,8 @@ services:
       STATE_MESSAGE_TTL: 1000
       STATE_PRESENCE: 'false'
       STATE_OLD: 'false'
+      STATE_EMOJI: 'false'
+      STATE_VOICE: 'false'
       RABBIT_HOST: rabbitmq
       RABBIT_PORT: 5672
       RABBIT_USERNAME: guest
@@ -151,16 +151,16 @@ services:
       PROMETHEUS_HOST: 0.0.0.0
       PROMETHEUS_PORT: 8005
 
-  postgres:
-    image: postgres:14-alpine
-    restart: unless-stopped
-    healthcheck:
-      test: ['CMD', 'pg_isready', '-U', 'postgres']
-    volumes:
-      - modmail-postgres:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: modmail
-      POSTGRES_HOST_AUTH_METHOD: trust
+  # postgres:
+  #   image: postgres:14-alpine
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ['CMD', 'pg_isready', '-U', 'postgres']
+  #   volumes:
+  #     - modmail-postgres:/var/lib/postgresql/data
+  #   environment:
+  #     POSTGRES_DB: modmail
+  #     POSTGRES_HOST_AUTH_METHOD: trust
 
   redis:
     image: redis:7-alpine
@@ -168,10 +168,10 @@ services:
     volumes:
       - modmail-redis:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: [ 'CMD', 'redis-cli', 'ping' ]
 
   rabbitmq:
     image: rabbitmq:3-alpine
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      test: [ 'CMD', 'rabbitmq-diagnostics', '-q', 'ping' ]
